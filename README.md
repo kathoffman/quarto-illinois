@@ -1,5 +1,7 @@
 # University of Washington-themed Revealjs Extension For Quarto
 
+**IN PROGRESS**
+
 A [quarto extension](https://quarto.org/docs/extensions/) featuring an [University of Washington-inspired theme](https://www.washington.edu/brand/graphic-elements/) for the [reveal.js format](https://quarto.org/docs/presentations/revealjs/). This theme was adapted from [coatless/quarto-illinois](https://github.com/coatless/quarto-illinois).
 
 ![](title-slide-quarto-washington.png)
@@ -9,7 +11,7 @@ A [quarto extension](https://quarto.org/docs/extensions/) featuring an [Universi
 You can obtain a copy of the extension by using: 
 
 ```bash
-quarto use template coatless/quarto-University of Washington
+quarto use template kathoffman/quarto-uw
 ```
 
 This will install the extension and create an example qmd file that 
