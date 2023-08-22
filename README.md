@@ -1,15 +1,15 @@
-# Illinois-themed Revealjs Extension For Quarto
+# University of Washington-themed Revealjs Extension For Quarto
 
-A [quarto extension](https://quarto.org/docs/extensions/) featuring an [Illinois-inspired theme](https://marketing.illinois.edu/visual-identity/color) for the [reveal.js format](https://quarto.org/docs/presentations/revealjs/).
+A [quarto extension](https://quarto.org/docs/extensions/) featuring an [University of Washington-inspired theme](https://www.washington.edu/brand/graphic-elements/) for the [reveal.js format](https://quarto.org/docs/presentations/revealjs/).
 
-![](title-slide-quarto-illinois.png)
+![](title-slide-quarto-washington.png)
 
 ## Installing
 
 You can obtain a copy of the extension by using: 
 
 ```bash
-quarto use template coatless/quarto-illinois
+quarto use template coatless/quarto-University of Washington
 ```
 
 This will install the extension and create an example qmd file that 
@@ -17,14 +17,14 @@ you can use as a starting place for your presentation slides.
 
 ## Using
 
-Once the extension is installed, you can use the extension by setting the `format` inside of the document header to `illinois-revealjs`.
+Once the extension is installed, you can use the extension by setting the `format` inside of the document header to `washington-revealjs`.
 
 ```markdown
 ---
 title: A title
 subtitle: A subtitle
 format:
-  illinois-revealjs: default
+   washington-revealjs: default
 author:
   - name: Your Name
     orcid: 0000-0000-0000-0000
@@ -34,11 +34,11 @@ date: last-modified
 ---
 ```
 
-If you wanted to use other [reveal.js features in quarto](https://quarto.org/docs/presentations/revealjs/), add the options under the `illinois-revealjs` format. For example, we can use the [`chalkboard`](https://quarto.org/docs/presentations/revealjs/presenting.html#chalkboard) feature by setting: 
+If you wanted to use other [reveal.js features in quarto](https://quarto.org/docs/presentations/revealjs/), add the options under the `washington-revealjs` format. For example, we can use the [`chalkboard`](https://quarto.org/docs/presentations/revealjs/presenting.html#chalkboard) feature by setting: 
 
 ```yaml
 format:
-  illinois-revealjs: 
+  washington-revealjs: 
     chalkboard: true
 ```
 
