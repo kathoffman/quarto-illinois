@@ -1,6 +1,6 @@
 # University of Washington-themed Revealjs Extension For Quarto
 
-A [quarto extension](https://quarto.org/docs/extensions/) featuring an [University of Washington-inspired theme](https://www.washington.edu/brand/graphic-elements/) for the [reveal.js format](https://quarto.org/docs/presentations/revealjs/).
+A [quarto extension](https://quarto.org/docs/extensions/) featuring an [University of Washington-inspired theme](https://www.washington.edu/brand/graphic-elements/) for the [reveal.js format](https://quarto.org/docs/presentations/revealjs/). This theme was adapted from [coatless/quarto-illinois](https://github.com/coatless/quarto-illinois).
 
 ![](title-slide-quarto-washington.png)
 
