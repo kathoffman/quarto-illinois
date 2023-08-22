@@ -1,10 +1,10 @@
 ---
-title: Overview of the Illinois Revealjs Theme
-subtitle: "Your Course - Semester YYYY @ Illinois"
+title: Overview of the University of Washington Revealjs Theme
+subtitle: "Your Course - Semester YYYY @ University of Washington"
 author: First Last
 date: last-modified
 format:
-  illinois-revealjs: default
+  washington-revealjs: default
 ---
 
 # Title-Only Slide
@@ -82,27 +82,27 @@ The theme is built ontop of Quarto's `revealjs` implementation. So, any [feature
 
 ```yaml
 format:
-  illinois-revealjs: 
+  washington-revealjs: 
     chalkboard: true
 ```
 
 ## Summary {#sec-summary}
 
-### Illinois-themed presentation slide deck
+### UW-themed presentation slide deck
 
-The Quarto Illinois Revealjs theme is an extension of Reveal.js and
-offers all of its [features](https://quarto.org/docs/presentations/revealjs/) in the context of being brand friendly at Illinois.
+The Quarto University of Washington Revealjs theme is an extension of Reveal.js and
+offers all of its [features](https://quarto.org/docs/presentations/revealjs/) in the context of being brand friendly at UW.
 
 Install the theme without this template:
 
 ```bash
-quarto install extension coatless/quarto-illinois
+quarto install extension coatless/quarto-uw
 ```
 
 Install the theme with the template being present:
 
 ```bash
-quarto use template coatless/quarto-illinois
+quarto use template coatless/quarto-uw
 ```
 
 You can learn more about using RevealJS with Quarto at: <https://quarto.org/docs/presentations/revealjs/>
