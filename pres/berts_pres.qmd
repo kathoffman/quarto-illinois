@@ -1,0 +1,405 @@
+---
+title: Introduction to Longitudinal Modified Treatment Policies
+subtitle: "A solution for studying complex, continuous, and/or time-varying exposures"
+author: Kat Hoffman
+date: "February 15, 2024"
+format:
+  beamer:
+    theme: "Boadilla"
+    fontsize: "10pt"
+keep-tex: true
+bibliography: refs.bib
+---
+
+## Overview 
+
+\newcommand{\Pdist}{\mathsf{P}}
+\newcommand{\dint}{\mathsf{d}}
+\newcommand{\E}{\mathsf{E}}
+\newcommand{\Ec}{\mathbb{E}}
+\newcommand{\V}{\mathsf{Var}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\pr}{\mathsf{pr}}
+
+
+- Discussing a tutorial paper on Longitudinal Modified Treatment Policies <!-- (accepted with minor revisions to *Epidemiology*) -->
+<!-- (accepted with minor revisions to *Epidemiology*) -->
+<!-- ![paper](img/arxiv_ss.png) -->
+- Target audience: epidemiologists and applied statisticians
+- Based on methodology proposed in *Díaz et al. (2021)*
+![paper](img/jasa_ss.png)
+
+
+## Methodology motivation 
+
+- Many causal inference methods and tutorials focus on binary exposures at a single time point
+
+  - Continuous/multi-level categorical exposures common in applied research, but methods, software, teaching materials are more limited
+
+  - Many studies have time-varying exposures, but methods are even less common
+  
+    - If there are time-dependent confounders, we require special methods to appropriately estimate treatment effects
+ 
+## Methodology motivation 
+  
+- Positivity assumption is essential to causal inference
+
+  - Violations are common in cases of categorical and continuous exposures
+
+  - Violations are exacerbated when there are multiple time points
+  
+- An active area of statistical research is defining, identifying, and estimating alternative causal estimands which may increase the likelihood of meeting the positivity assumption
+
+<!-- ## Proposed solution -->
+
+<!-- - Longitudinal Modified Treatment Policies allow us to define, identify, and estimate estimands which include interventions that depend on an individual unit's *natural value of treatment*, i.e. the value that treatment would take at time $t$ if an intervention was discontinued right before time $t$ -->
+
+<!-- -  -->
+
+## One solution: Longitudinal Modified Treatment Policies (LMTPs)
+
+- Diaz et al. (2021) proposed longitudinal interventions which depend on an individual's *natural value of treatment*
+
+  - Natural value of treatment: the value treatment would take at time $t$ if an intervention was discontinued right before time $t$
+
+  - Provided identification result and doubly/sequentially robust estimation algorithms
+
+- Methodology generalizes static, dynamic, and some stochastic interventions, so can accommodate:
+
+  - binary, categorical, continuous, and multiple exposures
+  - binary, continuous, time-to-event outcomes, competing risks, informative right-censoring, clustering
+  - point-in-time and time-varying settings
+
+- LMTPs help address violations of the positivity assumption, because we define an alternative interventions for which positivity holds by design
+
+## Tutorial organization
+
+1. Review static and dynamic interventions, and introduce (longitudinal) modified treatment policies
+
+2. High-level theory:
+    - Identification in point-in-time and time-varying settings
+    - Estimation procedures 
+
+3. Application:
+    - Provide examples of research questions that could be (or already have!) been addressed using LMTPs
+    - Illustrate application of an LMTP to estimate the effect of intubation timing on mortality in COVID-19 patients, using a real-world longitudinal observational data set
+
+    <!-- - Provide code and synthetic data to facilitate replication by future researchers -->
+ 
+
+# Notation and setup
+    
+## Notation 
+
+<!-- - We present notation for the most general form of the method (a longitudinal intervention which depends on the natural value of treatment) -->
+
+- $Z_1, ..., Z_n \overset{\text{iid}}{\sim} \Pdist$
+
+  - $\Pdist$ represents a longitudinal process and may contain any number of time points, but for simplicity we will describe a distribution with only two time points, $t \in \{0,1\}$
+  
+  - For each unit in the study, we observe a set of random variables $Z = (L_0, A_0, L_1, A_1, Y)$
+  
+
+| Notation | Description | Structural Causal Equation |
+|----|:--------|------------:|
+| $L_0$      | Baseline covariates  | $L_0 \leftarrow f_{L_0}(U_{L_0})$   | 
+| $A_0$    | Treatment at first time point  |   $A_0 \leftarrow f_{A_0}(L_0, U_{A_0})$ | 
+| $L_1$       | Time-varying covariates    |  $L_1 \leftarrow f_{L_1}(L_0, A_0, U_{L_1})$ |  
+| $A_1$      | Treatment at second time point    |   $A_1 \leftarrow f_{A_1}(L_0, A_0, L_1, U_{A_1})$ | 
+| $Y$      | Outcome at defined study period end   |    $Y \leftarrow f_Y(L_0, A_0, L_1, A_1, U_{Y})$ | 
+  
+  <!-- - At the first time point, baseline covariates $L_0$ affect the baseline exposure, $A_0$ -->
+
+  <!-- - At the second time point, we observe covariates $L_1$ and exposure $A_1$, which are themselves affected by $L_0$ and $A_0$, and have the potential to change from their respective baseline values (time-varying) -->
+
+  <!-- - outcome $Y$ is measured at the end of a defined follow up period -->
+
+  <!-- - endogenous variable $L_0, A_0, L_1, A_1,$ and $Y$ has a corresponding exogenous variable $U$, representing the unmeasured, external factors affecting each measured process -->
+
+## Directed Acyclic Graph (DAG)
+
+Simple DAG omitting unmeasured confounders:
+
+![](img/dag.png)
+
+Could have many more time points, high dimensional variables, competing events, censoring nodes etc.
+
+## Intervention notation
+
+- $H_t$: history of data measured up to right before $A_t$
+    - $H_0=L_0$
+    - $H_1 = (L_0, A_0, L_1)$
+    
+- Conceptualize treatment policies in terms of hypothetical interventions on nodes of the DAG
+
+- Interventions: consider a user-given function $\dint_0(a_0, h_0, \epsilon_0)$ which maps a treatment value $a_0$, a history $h_0$, and a possible randomizer $\epsilon_0$ into a potential treatment value 
+
+## Intervention notation
+
+- Intervention $\dint_0(a_0, h_0, \epsilon_0)$ defined by removing node $A_0$ from the DAG and replacing it with $A_0^\dint = \dint_0(A_0, H_0, \epsilon_0)$
+  - This assignment generates counterfactual data:
+    - $H_1(A_0^\dint)$: counterfactual history
+    - $A_1(A_0^\dint)$: natural value of treatment, i.e. the value that
+treatment would have taken if the intervention is performed at time
+$t=0$ but discontinued thereafter
+
+- At time $t=1$, the intervention is defined by a function $\dint_1(a_1, h_1, \epsilon_1)$
+  - However,
+at $t=1$ (and all subsequent times if there are more than two time
+points), the function must be applied to both the
+natural value of treatment \emph{and} the counterfactual history
+  - Remove node $A_1$ from the DAG and replacing it with
+$A_1^\dint = \dint_1(A_1(A_0^\dint), H_1(A_0^\dint), \epsilon_1)$
+
+- We refer to these longitudinal interventions, and the subsequent methods to identify and estimate effects under such interventions, as LMTPs
+
+
+# Review of static and dynamic interventions
+
+## Static interventions
+
+<!-- - $\dint$ is a constant function (does not vary with $a_t$, $h_t$, or $\epsilon_t$) -- -->
+
+- All units receive the same treatment
+
+  - For two time points, conceptualize a hypothetical world in which all units are treated at both time points ($\dint_t = 1$ for $t \in \{0, 1\}$)
+  
+  - Contrast to a hypothetical world in which no units are treated at either time point ($\dint_t = 0$ for $t \in \{0, 1\})$
+  
+  - Gives rise to the well-known Average Treatment Effect (ATE)
+  
+## Static intervention examples
+
+- Hypothetical intervening on a population to:
+  - treat everyone with a drug versus treat no one with a drug
+  - enforce 30 minutes of moderate exercise for all individuals, every day
+  - give all individuals an exact level of antibodies for a certain disease
+  - setting a certain level of air quality each day, for all geographical areas of interest
+  
+## Dynamic interventions
+
+- Intervention depends only on a study unit's past covariates
+  - Can include past treatment
+
+- Often used in observational studies when study units need to meet an indication of interest for a treatment or policy to reasonably begin, e.g.
+  - severity of illness indicator
+  - socioeconomic threshold to begin a policy
+  
+## Dynamic interventions
+
+One of the first uses of dynamic interventions was in the context of HIV, where investigators were interested in the effect of initiating antiretroviral therapy for a person with HIV if their CD4 count falls below a threshold, e.g. 200 cells/$\mu$l
+  [@hernan2006comparison]
+  
+
+\begin{align*}
+\dint_t(h_t)=\begin{cases}
+      1 &\text{ if } l_t^*<200 \text{ for all } s \ge t\\
+      0&\text{ otherwise,}
+\end{cases}
+\end{align*}
+
+where $L_t^*$ is a variable in $H_t$ that denotes CD4 T-cell count
+  
+## Dynamic intervention examples
+
+Another example is studying the effect of initiating a corticosteroids regimen for COVID-19 patients [@hoffman2022comparison]
+
+We estimated mortality under a hypothetical policy where corticosteroids are administered for six days if and when a COVID-19 patient first meets a severity of illness criteria (i.e. low levels of blood oxygen)
+
+\begin{align}
+\dint_t(h_t)=\begin{cases}
+      1 &\text{ if } l_s^*=1 \text{ for any } s\in\{t-5,\ldots, t\}\\
+      0&\text{ otherwise,}
+\end{cases}
+\end{align}
+
+where $L_t^*$ is a variable in $H_s$ that denotes the first instance of low levels of blood oxygen.
+  
+## Dynamic intervention examples
+
+![](img/jama_dynamic.png)
+
+# Modified Treatment Policies
+
+
+## Modified Treatment Policy
+
+- While static and dynamic interventions are considered \textbf{deterministic}, MTPs are part of more general class of \textbf{stochastic} interventions
+
+- Intervention function $\dint_t(a_t, h_t, \epsilon_t)$ non-trivially depends on the natural value of treatment $a_t$, and perhaps on $h_t$ and/or $\epsilon_t$
+
+- Various types of MTPs have been proposed over the years (sometimes called "interventions which depend on the natural value of treatment")
+
+## MTP examples: threshold functions
+
+\textbf{Threshold function:} all natural exposure values which fall outside of a certain boundary are intervened upon to meet a constant value
+
+  - Could be used to assess the effect of lifestyle interventions, for example, intervening on individuals' average number of drinks per week and estimating
+the risk of coronary heart disease [@taubman2009intervening]
+
+ - If we categorize drinks per week as 1 = "none," 2 = "1-5," 3 = "6-10,"  4 = "11-15," and  5 = ">25", and we intervene to lower all individuals in the highest two drinks-per-week categories to "6-10," we can consider that intervention in notation as,
+
+\begin{align*}
+\dint_t(a_t)=\begin{cases}
+      a_t & \text{ if } a_t < 4\\
+      3 & \text{ otherwise. }
+    \end{cases}
+\end{align*}
+
+## MTP examples: stochastic policy
+
+- Another example of an MTP: a hypothetical policy in
+  which half of all current smokers quit smoking forever [@robins2004effects]
+  
+  - Motivated by the infeasibility of studying a world in which all current smokers quit smoking forever, since genetics, environment, and many other factors will always create some portion of current smokers who will never quit
+  
+  - Letting $A_t$ denote a random variable denoting smoking and $\epsilon_t$ a random draw from a uniform
+  distribution in $(0,1)$,
+  
+\begin{align*}
+\dint_t(a_t,\epsilon_t)=\begin{cases}
+      0 & \text{ if } \epsilon_t<0.5 \text{ and } a_t=1\\
+      a_t & \text{ otherwise, }
+    \end{cases}
+\end{align*}
+  
+## MTP examples: shift functions
+
+\textbf{Shift functions} assign treatment by modifying the natural value of
+  the exposure by some constant $\delta$
+  
+  - This intervention can be
+additive onto the exposure value, such as estimating the effect of a hypothetical intervention to reduce lung cancer resection surgeries lasting longer than 60 minutes by 15 minutes [@haneuse2013estimation]
+
+\begin{align*}
+\dint_t(a_t)=\begin{cases}
+      a_t & \text{ if } a_t \leq 60 \\
+      a_t - 15 & \text{ otherwise. }
+    \end{cases}
+\end{align*}
+
+
+## MTP examples: shift functions
+
+  - A shift function can also change the exposure on a
+  multiplicative scale
+    - For example, studying the effect of an intervention which
+  doubles the number of street lights for roads with less than 10
+  lights per mile on nighttime automobile accidents
+
+\begin{align*}
+\dint_t(a_t)=\begin{cases}
+      a_t & \text{ if } a_t \ge 10 \\
+      2a_t & \text{ otherwise. }
+    \end{cases}
+    \end{align*}
+ 
+# Causal estimand
+
+## Causal estimand
+
+- Once an intervention is specified, the counterfactual outcomes of observations under a specific $\dint$ are denoted as
+$Y(\bar{A}_\tau^\dint)$, where $\bar{A}$ indicates the history of measurements of $A$ for all time points, i.e. $\bar A = (A_1, \ldots, A_\tau)$
+
+- Causal effects are defined as a distribution of contrasts of $Y(\bar{A}_\tau^\dint)$ under different interventions, $\dint'$ and $\dint^\star$
+
+- In this tutorial, we focus on $\E[Y(\bar{A}_\tau^{\dint'}) - Y(\bar{A}_\tau^{\dint ^ {\star}})]$ as our causal estimand of interest
+
+  - The functions $\dint'$ and $\dint^\star$ may be any type of intervention, including "no intervention"
+  
+# Identification
+
+## Identification
+  
+- Now, we need to write our counterfactual expectation $\E[Y(\bar{A}_\tau^{\dint'})]$ as a formula that depends only
+on the observed data distribution---i.e., an identifying formula
+
+- This requires assumptions, some of which are untestable with the data available
+
+  - The mathematically rigorous form of the
+assumptions is given elsewhere [@richardson2013single]
+  [@diaz_nonparametric_2021], but we state them in the tutorial in simple terms
+
+## Identification assumptions
+
+### Positivity
+
+- If it is possible to find an observation with history $h_t$ with an exposure of $a_t$, then it is also possible to find an observation with history $h_t$ with an exposure $\d(a_t, h_t, \epsilon_t)$
+  
+### Strong sequential randomization
+
+- All common causes of the intervention variable $A_t$ and $(U_{L,t+1}, U_{A,t+1})$ are measured and recorded in $H_t$.
+
+  - Generally satisfied if $H_t$ contains all common causes of $A_t$ and
+  $(L_{t+1}, A_{t+1}, \ldots, L_\tau, A_\tau,\allowbreak Y)$, where $\tau$ is
+  the last time point in the study
+  
+### Weak sequential randomization
+
+- All common causes of the intervention variable $A_t$ and $(U_{L,t+1})$ are measured and recorded in $H_t$ 
+
+## Identification assumptions
+
+- While static and dynamic interventions require the weak version of sequential randomization, LMTPs require the strong version
+
+- Violations to the positivity assumption can be \textbf{structural} or \textbf{practical}
+
+  - \textbf{Structural}: certain characteristics of an individual or unit which will never yield receipt of the treatment assignment under the intervention. This violation will not improve even with an infinite sample size.
+  
+  - \textbf{Practical}: Due to random chance or small datasets, there are certain covariate combinations with zero or near-zero predicted probabilities of treatment.
+ 
+## Positivity, cont.
+   
+- Positivity violations increase the finite bias and variance of estimates and severely threaten the validity of casual inference analyses when not addressed
+
+- For time-varying treatments, positivity must be maintained at each time point
+
+- By design, non-static interventions (e.g. dynamic treatment rules, MTPs) may help define estimands with plausible positivity, since the function $\dint$ can be modified to affect the exposure of only observations which are not subject to positivity violations
+
+## Example of redefining an estimand
+
+- Think of a world in which a continuous exposure is observed at some fixed value higher or lower than it was factually observed for every unit in the study
+
+  - EX: surgery times were 15 minutes shorter for all lung resection biopsies
+  
+- This hypothetical intervention is destined for structural positivity violations, because at the lowest end of the observed exposure range, there will by definition be no support for the intervened exposure level $\dint(a_t)$ (much less conditional on the observation's history $h_t$)
+
+- This can be avoided by constraining the range of $a_t$ affected by the hypothetical intervention, so that no $\dint(a_t)$ values are produced outside the observed range of $A$
+
+  - Could modify intervention to accommodate any other remaining structural or practical positivity violations 
+
+  <!-- For example, clinical knowledge may inform us that a treatment of interest will never be administered after a certain amount of time since a disease diagnosis has passed, so the hypothetical intervention would restrict the values of $t$ in which the intervention can occur. Alternatively, if there is not enough support in the data for individuals of a certain covariate strata or at a naturally observed exposure level to receive the intervention, a different estimand can be defined. -->
+
+# Identification formula
+
+## Identification formula
+
+- Under positivity and strong (or weak) sequential randomization assumptions, the estimand is identified by the generalized g-formula
+
+- A re-expression of this generalized g-formula involves recursively defining the expected outcome under the intervention conditional on the observation’s observed exposure and history
+  - beginning at the final time point, and proceeding until the earliest time point
+
+## Identification formula
+
+\begin{enumerate}
+
+\item Start with the conditional expectation of the outcome $Y$ given $A_1=a_1$ and $H_1=h_1$. Let this function be denoted $Q_1(a_1, h_1)$
+\item Evaluate the above conditional 
+  expectation of $Y$ if $A_1$ were changed to $A^\dint_1$, which results in 
+  a pseudo outcome $\tilde Y_1=Q_1(A^\dint_1, H_1)$
+\item Let the true expectation of $\tilde Y_1$ conditional on
+  $A_0=a_0$ and $H_0=h_0$ be denoted $Q_0(a_0, h_0)$
+\item Evaluate the above
+  expectation of $\tilde Y_1$ if $A_0$ were changed to $A^\dint_0$, which results in
+  $\tilde Y_0=Q_0(A^\dint_0, H_0)$
+\item Under the identifying assumptions, we have
+  $\E[Y(\bar{A}_\tau^\dint)]=\E[\tilde Y_0]$
+  
+\end{enumerate}
+
+# Estimation
+
+## References
+
+For more information:

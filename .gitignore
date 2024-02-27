@@ -1,3 +1,6 @@
 *_files
 *.html
 /logo-illinois-block-i.png
+
+/.quarto/
+.Rproj.user

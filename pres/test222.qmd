@@ -1,0 +1,465 @@
+---
+title: Introduction to Longitudinal Modified Treatment Policies
+subtitle: "A solution for studying complex, continuous, and/or time-varying exposures"
+author: Kat Hoffman
+date: "February 2, 2024"
+format:
+  beamer:
+    fontsize: "10pt"
+keep-tex: true
+bibliography: refs.bib
+---
+
+## Overview 
+
+\newcommand{\Pdist}{\mathsf{P}}
+\newcommand{\dint}{\mathsf{d}}
+\newcommand{\E}{\mathsf{E}}
+\newcommand{\Ec}{\mathbb{E}}
+\newcommand{\V}{\mathsf{Var}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\pr}{\mathsf{pr}}
+
+
+- Discussing a tutorial paper on Longtudinal Modified Treatment Policies (accepted with minor revisions to *Epidemiology*)
+<!-- (accepted with minor revisions to *Epidemiology*) -->
+<!-- ![paper](img/arxiv_ss.png) -->
+- Target audience: epidemiologists and applied statisticians
+- Based on methodology proposed in *Díaz et al. (2021)*
+![paper](img/jasa_ss.png)
+
+
+## Methodology motivation 
+
+- Many causal inference methods and tutorials focus on binary exposures at a single time point
+
+  - Continuous/multi-level categorical exposures common in applied research, but methods, software, teaching materials are more limited
+
+  - Many studies have time-varying exposures, but methods are even less common
+  
+- Positivity assumption is essential to causal inference
+
+  - Violations are common in cases of categorical and continuous exposures
+
+  - Exacerbated when there are multiple time points
+
+<!-- ## Proposed solution -->
+
+<!-- - Longitudinal Modified Treatment Policies allow us to define, identify, and estimate estimands which include interventions that depend on an individual unit's *natural value of treatment*, i.e. the value that treatment would take at time $t$ if an intervention was discontinued right before time $t$ -->
+
+<!-- -  -->
+
+## One solution: Longitudinal Modified Treatment Policies (LMTPs)
+
+- Diaz et al. (2021) proposed longitudinal interventions which depend on an individual's *natural value of treatment*
+
+  - Natural value of treatment: the value treatment would take at time $t$ if an intervention was discontinued right before time $t$
+
+  - Provided identification result and doubly/sequentially robust estimation algoritms
+
+- Methodology generalizes static, dynamic, and some stochastic interventions, so can accommodate:
+
+  - binary, categorical, continuous, and multiple exposures
+  - binary, continuous, time-to-event outcomes, competing risks, informative right-censoring, clustering
+  - point-in-time and time-varying settings
+
+- LMTPs help address violations of the positivity assumption, because we define an alternative interventions for which positivity holds by design
+
+## Motivation: Tutorial 
+
+1. Review static and dynamic interventions, and introduce (longitudinal) modified treatment policies
+
+2. High-level theory:
+    - Identification in point-in-time and time-varying settings
+    - Estimation procedures 
+
+3. Application:
+    - Provide examples of research questions that could be (or already have!) been addressed using LMTPs
+    - Illustrate application of an LMTP to estimate the effect of intubation timing on mortality in COVID-19 patients, using a real-world longitudinal observational data set
+
+    <!-- - Provide code and synthetic data to facilitate replication by future researchers -->
+ 
+
+# Notation and setup
+    
+## Notation 
+
+<!-- - We present notation for the most general form of the method (a longitudinal intervention which depends on the natural value of treatment) -->
+
+- $Z_1, ..., Z_n \overset{\text{iid}}{\sim} \Pdist$
+
+  - $\Pdist$ represents a longitudinal process and may contain any number of time points, but for simplicity we will describe a distribution with only two time points, $t \in \{0,1\}$
+  
+  - For each unit in the study, we observe a set of random variables $Z = (L_0, A_0, L_1, A_1, Y)$
+
+| Notation | Description | Structural Causal Equation |
+|----|:--------|------------:|
+| $L_0$      | Baseline covariates  | $L_0 \leftarrow f(U_{L_0})$   | 
+| $A_0$    | Treatment at first time point  |   $f(L_0) \leftarrow U_{L_0}$ | 
+| $L_1$       | Time-varying covariates    |  $f(L_0) \leftarrow U_{L_0}$ |  
+| $A_1$      | Treatment at second time point    |   $f(L_0) \leftarrow U_{L_0}$ | 
+| $Y$      | Outcome at defined study period end   |    $f(L_0) \leftarrow U_{L_0}$ | 
+  
+  <!-- - At the first time point, baseline covariates $L_0$ affect the baseline exposure, $A_0$ -->
+
+  <!-- - At the second time point, we observe covariates $L_1$ and exposure $A_1$, which are themselves affected by $L_0$ and $A_0$, and have the potential to change from their respective baseline values (time-varying) -->
+
+  <!-- - outcome $Y$ is measured at the end of a defined follow up period -->
+
+  <!-- - endogenous variable $L_0, A_0, L_1, A_1,$ and $Y$ has a corresponding exogenous variable $U$, representing the unmeasured, external factors affecting each measured process -->
+
+## Directed Acyclic Graph (DAG)
+
+Simple DAG omitting unmeasured confounders:
+
+![](img/dag.png)
+
+Could have many more time points, high dimensional variables, competing events, censoring nodes etc.
+
+## Intervention notation
+
+- $H_t$: history of data measured up to right before $A_t$
+    - $H_0=L_0$
+    - $H_1 = (L_0, A_0, L_1)$
+    
+- Conceptualize treatment policies in terms of hypothetical interventions on nodes of the DAG
+
+- Interventions: consider a user-given function $\dint_0(a_0, h_0, \epsilon_0)$ which maps a treatment value $a_0$, a history $h_0$, and a possible randomizer $\epsilon_0$ into a potential treatment value. 
+
+<!-- - The intervention at time $t=0$ is defined by removing node $A_0$ from the DAG and replacing it with $A_0^\dint = \dint_0(A_0, H_0, \epsilon_0)$. This assignment generates counterfactual data $H_1(A_0^\dint)$ and $A_1(A_0^\dint)$, where we use notation $X(A_0^\dint)$ to denote the counterfactual value of $X$ that would have been observed had treatment at time 0, $A_0$ been assigned according to $\dint$. $H_1(A_0^\dint)$ is referred to as the -->
+<!-- counterfactual history and $A_1(A_0^\dint)$ is referred to as the -->
+<!-- \textit{natural value of treatment} \citep{robins2004effects, -->
+<!--   richardson2013single, YoungHernanRobins2014}, i.e., the value that -->
+<!-- treatment would have taken if the intervention is performed at time -->
+<!-- $t=0$ but discontinued thereafter. -->
+<!-- At time $t=1$, the intervention is -->
+<!-- likewise defined by a function $\dint_1(a_1, h_1, \epsilon_1)$. However, -->
+<!-- at $t=1$ (and all subsequent times if there are more than two time -->
+<!-- points), the function must be applied %is -->
+<!-- applied to both the -->
+<!-- natural value of treatment \emph{and} the counterfactual history. That is, at time $t=1$, the intervention -->
+<!-- %LMTP  -->
+<!-- is -->
+<!-- defined by removing node $A_1$ from the DAG and replacing it with -->
+<!-- $A_1^\dint = \dint_1(A_1(A_0^\dint), H_1(A_0^\dint), \epsilon_1)$. -->
+
+We refer to these longitudinal interventions, and the subsequent methods to identify and estimate effects under such interventions, as LMTPs. 
+
+<!-- We now give examples of how the functions $\dint_t$ may -->
+<!-- be defined, explain how they mathematically generalize static and dynamic %, and -->
+<!-- %many stochastic -->
+<!-- interventions, and discuss novel and useful interventions -->
+<!-- that may be defined using this setup.  -->
+
+
+# Review of static and dynamic interventions
+
+## Static interventions
+
+<!-- - $\dint$ is a constant function (does not vary with $a_t$, $h_t$, or $\epsilon_t$) -- -->
+
+- All units receive the same treatment
+
+  - For two time points, conceptualize a hypothetical world in which all units are treated at both time points $(\dint_t = 1$ for $t \in \{0, 1\})$
+  
+  - Contrast to a hypothetical world in which no units are treated at either time point ($\dint_t = 0$ $t \in \{0, 1\})$
+  
+  - Gives rise to the well-known Average Treatment Effect (ATE)
+  
+## Static intervention examples
+
+- Hypothetical intervening on a population to:
+  - enforce 30 minutes of moderate exercise for all individuals, every day
+  - give all individuals an exact level of antibodies for a certain disease
+  - setting a certain level of air quality each day, for all geographical areas of interest
+  
+## Dynamic interventions
+
+- Intervention depends only on a study unit's past covariates
+  - Can include past treatment
+
+- Often used in observational studies when study units need to meet an indication of interest for a treatment or policy to reasonably begin, e.g.
+  - severity of illness indicator
+  - socioeconomic threshold to begin a policy
+  
+## Dynamic interventions
+
+- One of the first uses of dynamic interventions was in the context of HIV, where investigators were interested in the effect of initiating antiretroviral therapy for a person with HIV if their CD4 count falls below a threshold, e.g. 200 cells/$\mu$l
+  [@hernan2006comparison]
+  
+
+\begin{align*}
+\dint_t(h_t)=\begin{cases}
+      1 &\text{ if } l_t^*<200 \text{ for all } s \ge t\\
+      0&\text{ otherwise,}
+\end{cases}
+\end{align*}
+
+where $L_t^*$ is a variable in $H_t$ that denotes CD4 T-cell count
+  
+## Dynamic intervention examples
+
+-  Studying the effect of initiating a corticosteroids regimen for COVID-19 patients [@hoffman2022comparison]
+
+  - Estimated mortality under a hypothetical policy where corticosteroids are administered for six days if and when a COVID-19 patient first meets a severity of illness criteria (i.e. low levels of blood oxygen)
+
+\begin{align}
+\dint_t(h_t)=\begin{cases}
+      1 &\text{ if } l_s^*=1 \text{ for any } s\in\{t-5,\ldots, t\}\\
+      0&\text{ otherwise,}
+\end{cases}
+\end{align}
+
+  where $L_t^*$ is a variable in $H_s$ that denotes the first instance of low levels of blood oxygen.
+  
+## Dynamic intervention examples
+
+![](img/jama_dynamic.png)
+
+
+## Dynamic intervention examples
+
+- Pollution example: instead of studying a hypothetical intervention in which all counties in the US have an air quality of a certain measure, we design a dynamic intervention in which rural counties have an air quality of 20 and urban counties have an air quality of 40
+
+PICTURES
+
+## Modified Treatment Policy
+
+- Intervention function $\d_t(a_t, h_t, \epsilon_t)$ non-trivially depends on the natural value of treatment $a_t$, and perhaps on $h_t$ and/or $\epsilon_t$
+
+- Prior examples of interventions which depend on the natural value of treatment
+  - Threshold intervention (CITE)
+  - smoking cessation
+  - we will focus on shift interventions
+
+# Identification
+
+## Identification assumptions
+
+### Positivity
+
+- If it is possible to find an observation with history $h_t$ with an
+  exposure of $a_t$, then it is also possible to find an observation
+  with history $h_t$ with an exposure $\d(a_t, h_t, \epsilon_t)$
+  
+### Strong sequential randomization
+
+- All common causes of the intervention variable $A_t$ and $(U_{L,t+1}, U_{A,t+1})$ are measured and recorded in $H_t$.
+  - Generally satisfied if $H_t$ contains all common causes of $A_t$ and
+  $(L_{t+1}, A_{t+1}, \ldots, L_\tau, A_\tau,\allowbreak Y)$, where $\tau$ is
+  the last time point in the study
+  
+### Weak sequential randomization[@richardson2013single @diaz_nonparametric_2021]
+
+- All common causes of the intervention variable $A_t$ and $(U_{L,t+1})$ are measured and recorded in $H_t$ [@taubman2009intervening]
+
+## Identification formula
+
+\begin{enumerate}
+
+\item Start with the conditional expectation of the outcome $Y$ given $A_1=a_1$ and $H_1=h_1$. Let this function be denoted $Q_1(a_1, h_1)$.
+\item Evaluate the above conditional 
+  expectation of $Y$ if $A_1$ were changed to $A^\dint_1$, which results in 
+  a pseudo outcome $\tilde Y_1=Q_1(A^\dint_1, H_1)$.
+\item Let the true expectation of $\tilde Y_1$ conditional on
+  $A_0=a_0$ and $H_0=h_0$ be denoted $Q_0(a_0, h_0)$.
+\item Evaluate the above
+  expectation of $\tilde Y_1$ if $A_0$ were changed to $A^\dint_0$, which results in
+  $\tilde Y_0=Q_0(A^\dint_0, H_0)$.
+\item Under the identifying assumptions, we have
+  $\E[Y(\bar{A}_\tau^\dint)]=\E[\tilde Y_0]$.
+  
+\end{enumerate}
+
+# Estimation
+
+## test
+
+Once a causal estimand is defined and identified, the researcher's task is to estimate the statistical quantity, e.g. $\E[\Tilde{Y}_0]$
+
+## Parametric estimation
+
+- Simplest option: fit parametric outcome regressions for each step of g-formula identification result
+  - "Plug-in" estimator called **parametric g-formula** or **g-computation**
+
+- Alternatively, use estimator which relies on the exposure mechanism
+  - Inverse Probability Weighting (IPW) estimator
+  - IPW estimation involves reweighting the observed outcome by a quantity which represents the likelihood the intervention was received, conditional on covariates
+
+## G-computation {.smaller}
+
+\begin{enumerate}
+\item Fit a generalized linear model (GLM) for $Y$ conditional on $A_1=a_1$ and
+  $H_1=h_1$. Call this $\hat{Q_1}(a_1, h_1)$.
+  
+  \texttt{Q1\_hat} $\gets$ \texttt{glm}$(\text{outcome} = Y, \text{predictors} = \{H_1, A_1\})$
+
+
+\item Modify the data set used in step (1) so that the values in the column for $A_1$ are changed to $A^\dint_1$. Obtain the predictions for the model $\hat{Q_1}$ using this modified data set. These are pseudo-outcomes
+  $\tilde Y_1$.
+
+\texttt{pseudo\_Y1} $\gets$ \texttt{predict}$(\text{fit} =   \texttt{Q1\_hat}, \text{new data} = \{H_1, A_1 = A_1^\dint\} )$
+
+\item Fit a generalized linear model (GLM) for $\tilde Y_1$ conditional on
+  $A_0=a_0$ and $H_0=h_0$. Call this $\hat{Q_0}(a_0, h_0)$.
+
+  \texttt{Q0\_hat} $\gets$ \texttt{glm}$(\text{outcome} = \texttt{pseudo\_Y1}, \text{predictors} = \{H_0, A_0\})$
+
+\item  Modify the data set used in step (3) so that the values in the column for $A_0$ are changed to $A^\dint_0$. Obtain the predictions for the model $\hat{Q_0}$ using this modified data set. These are pseudo-outcomes
+  $\tilde Y_0$.
+
+\texttt{pseudo\_Y0} $\gets$ \texttt{predict}$(\text{fit} =   \texttt{Q1\_hat}, \text{new data} = \{H_0, A_0 = A_0^\dint\} )$
+
+\item Average $\tilde Y_0$, i.e. compute $\hat\E[\tilde Y_0]$.
+
+\texttt{estimate} $\gets$ \texttt{mean(pseudo\_Y0)}
+\end{enumerate}
+
+
+## Temp
+
+<!--  Another option is to use an estimator which relies on the exposure mechanism, for example, the Inverse Probability Weighting (IPW) estimator. IPW estimation involves reweighting the observed outcome by a quantity which represents the likelihood the intervention was received, conditional on covariates. %In a binary treatment, this quantity is a cumulative inverted probability $\prod_{t=1}^{\tau} 1/\mathrm{Pr}(A_t=1|A_t=a_t,H_t=h_t)$, and in a continuous treatment, this quantity is a cumulative density ratio, $\prod_{t=1}^{\tau} \frac{g(A_t^\d=A_t|A_t=a_t,H_t=h_t)}{g(A_t=A_t|A_t=a_t,H_t=h_t)}$. \kh{fix this notation}  -->
+<!-- % We provide algorithms for G-computation and IPW estimation for two time points in the Appendix. -->
+
+<!-- Obtaining point estimations with the g-computation and IPW algorithms is computationally straightforward. If the exposure regression for IPW or outcome regression for -->
+<!-- g-computation are estimated using pre-specified parametric statistical models, standard errors for the estimate can be computed using bootstrapping or the Delta method. However, in causal models with large numbers of covariates and/or complex mathematical relations between confounders, exposures, and -->
+<!-- outcomes, parametric models are hard to pre-specify, and they are unlikely to consistently estimate the regressions. If the regression for the outcome (for g-computation) or treatment (for IPW) are misspecified, the final estimates will be biased. -->
+
+<!-- One way to alleviate model misspecification is to use flexible approaches which incorporate model selection (e.g. %penalized regression, random forests, splines, -->
+<!-- LASSO, splines, boosting, random forests, ensembles thereof, etc.) to estimate the exposure or outcome -->
+<!-- regressions. Unfortunately, there is generally not statistical theory to support the standard errors of the g-computation or IPW estimators with such data-adaptive regressions. Standard inferential tools such as the bootstrap will fail because these estimators generally do not have an asymptotically normal distribution after using data-adaptive regressions \citep{van2011targeted}. Thus, other methods are needed to accommodate both model selection and flexible regression techniques while still allowing for statistical inference.  -->
+
+
+
+<!-- ## Parametric Estimation -->
+
+<!-- -The simplest option for estimation is to fit parametric outcome regressions for each step of the g-formula identification result. This ``plug-in'' esimator is often referred to as the parametric g-formula or g-computation. -->
+
+<!-- ## Standard Errors with Parametric Estimation -->
+
+<!-- - Obtaining point estimations with the g-computation and IPW algorithms is computationally straightforward -->
+
+<!-- - If the exposure regression for IPW or outcome regression for g-computation are estimated using pre-specified parametric statistical models, standard errors for the estimate can be computed using bootstrapping or the Delta method -->
+
+<!-- - However, in causal models with large numbers of covariates and/or complex mathematical relations between confounders, exposures, and outcomes, parametric models are hard to pre-specify, and they are unlikely to consistently estimate the regressions -->
+
+<!-- - If the regression for the outcome (for g-computation) or treatment (for IPW) are misspecified, the final estimates will be biased. -->
+
+<!-- ## Non-parametric Estimation -->
+
+<!-- - Advocate for the use of general, non-parametric estimators for LMTPs \citep{diaz_nonparametric_2021}. -->
+
+<!-- <!-- - Use both an exposure and outcome regression, and allow the use of machine learning to estimate the regressions while still obtaining valid statistical uncertainty quantification on the final estimates. %This is due to the estimators' desirable statistical properties of $\sqrt{n}$-consistency and asymptotic normality, which allow for Wald-type uncertainty quantification.  --> -->
+
+<!-- - These estimators also remain consistent under inconsistent estimation of at most one of the nuisance parameters. -->
+
+<!-- - The theoretical guarantees of these estimators have some technical requirements, described in the Appendix. -->
+
+<!-- - The two non-parametric estimators proposed in \citet{diaz_nonparametric_2021} and -->
+<!--  encoded in the R package \emph{lmtp} \citep{lmtppkg, nickpaper} are Targeted Maximimum Likelihood Estimation (TMLE) \citep{van2011targeted, van2012targeted, diaz_nonparametric_2021} and Sequentially Doubly Robust (SDR) estimation \citep{luedtke2017sequential, rotnitzky2017multiply, diaz_nonparametric_2021} -->
+
+<!--  - A third non-parametric estimator, iterative TMLE (iTMLE), is not encoded in the R package but could be adapted from \citet{luedtke2017sequential} -->
+
+<!--  - TMLE is a doubly robust estimator for a time-varying treatment in the sense that it is consistent as long as all outcome regressions for times $t>s$ are consistently estimated, and all treatment mechanisms for times $t\leq s$ are consistent, for some time $s$ -->
+
+<!--  - In contrast, SDR and iTMLE are sequentially doubly robust in that they are consistent if for all times $t$, either the outcome or the treatment mechanism are consistently estimated \citep{luedtke2017sequential, diaz_nonparametric_2021} -->
+
+<!--  - Since TMLE and iTMLE are substitution estimators, they are guaranteed to produce estimates which remain within the observed outcome range. SDR and iTMLE produce estimators with more robustness than TMLE. -->
+
+<!--  Table \ref{tab:est-props} compares the statistical properties of various -->
+<!-- estimators. We provide practical guidance for choosing between estimation techniques in the Appendix. -->
+<!-- Of note, for the statistical properties of these estimators to hold, certain technical requirements must be met. These requirements are %stated in the footnote of Table \ref{tab:est-props} and  -->
+<!-- detailed in the Appendix. All of the aforementioned examples meet these requirements. -->
+
+
+## Application examples
+
+## Illustrative application
+
+## Software/algos
+
+## Technicalities
+
+Or **bold**, *italic*, or [URL](https://illinois.edu) text.
+
+## Mathematics
+
+Inline mode: $c^2 = a^2 + b^2$
+
+Display mode: 
+
+$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+## Columns
+
+We could also split content between two columns:
+
+::: {.columns}
+
+::: {.column width="45%"}
+Left column
+:::
+
+::: {.column width="45%"}
+Right column
+:::
+
+:::
+
+<https://quarto.org/docs/presentations/revealjs/#multiple-columns>
+
+## Code Highlighting
+
+For continuous highlighting, use `from-to` (`6-8`).
+
+For discontinuous highlighting, use `line1, line2, ...` (`1, 4`).
+
+To highlight lines in a progressive manner, use `range1|range2` (`|1,4|6-8`). 
+
+```{.python code-line-numbers="|6|9"}
+import numpy as np
+import matplotlib.pyplot as plt
+
+r = np.arange(0, 2, 0.01)
+theta = 2 * np.pi * r
+fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+ax.plot(theta, r)
+ax.set_rticks([0.5, 1, 1.5, 2])
+ax.grid(True)
+plt.show()
+```
+
+<https://quarto.org/docs/presentations/revealjs/#code-blocks>
+
+## Enable more revealjs features
+
+The theme is built ontop of Quarto's `revealjs` implementation. So, any [features](https://quarto.org/docs/presentations/revealjs/) of available are also usable within the theme. For example, if we wanted to incorporate the [chalkboard](https://quarto.org/docs/presentations/revealjs/presenting.html#chalkboard) feature. We would use:
+
+```yaml
+format:
+  washington-revealjs: 
+    chalkboard: true
+```
+
+## Summary {#sec-summary}
+
+### UW-themed presentation slide deck
+
+The Quarto University of Washington Revealjs theme is an extension of Reveal.js and
+offers all of its [features](https://quarto.org/docs/presentations/revealjs/) in the context of being brand friendly at UW.
+
+Install the theme without this template:
+
+```bash
+quarto install extension kathoffman/quarto-uw
+```
+
+Install the theme with the template being present:
+
+```bash
+quarto use template kathoffman/quarto-uw
+```
+
+You can learn more about using RevealJS with Quarto at: <https://quarto.org/docs/presentations/revealjs/>
+
